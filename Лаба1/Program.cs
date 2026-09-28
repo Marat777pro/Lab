@@ -125,3 +125,6 @@ namespace GeneSearchApp
 
             Console.WriteLine("Обработка завершена. Результаты сохранены в genedata.txt");
         }
+        
+    }
+}
