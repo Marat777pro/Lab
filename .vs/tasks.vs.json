@@ -1,0 +1,15 @@
+{
+  "version": "0.2.1",
+  "tasks": [
+    {
+      "taskLabel": "задача-Лаба1",
+      "appliesTo": "Лаба1/",
+      "type": "launch"
+    },
+    {
+      "taskLabel": "задача-C#",
+      "appliesTo": "/",
+      "type": "launch"
+    }
+  ]
+}
