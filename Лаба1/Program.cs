@@ -2,183 +2,186 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 namespace GeneSearchApp
 {
     class Program
     {
-
-        class ProteinData
+        struct BioItem
         {
-            public string Name { get; set; }
-            public string Organism { get; set; }
-            public string Sequence { get; set; } 
+            public string Title { get; set; }
+            public string Source { get; set; }
+            public string Chain { get; set; }
         }
 
         static void Main(string[] args)
         {
-            string sequencesPath = "sequences.txt";
-            string commandsPath = "commands.txt";
-            string outputPath = "genedata.txt";
+            const string srcFile = "sequences.txt";
+            const string cmdFile = "commands.txt";
+            const string resFile = "genedata.txt";
 
-            if (!File.Exists(sequencesPath) || !File.Exists(commandsPath))
+            if (!File.Exists(srcFile) || !File.Exists(cmdFile))
             {
                 Console.WriteLine("Ошибка: Отсутствуют входные файлы sequences.txt или commands.txt!");
                 return;
             }
 
-            List<ProteinData> proteins = new List<ProteinData>();
-            foreach (var line in File.ReadLines(sequencesPath))
+            List<BioItem> registry = LoadRegistry(srcFile);
+
+            using (StreamWriter output = new StreamWriter(resFile))
             {
-                if (string.IsNullOrWhiteSpace(line)) continue;
-                
-                var parts = line.Split('\t');
-                if (parts.Length >= 3)
+                output.WriteLine("Иван Иванов");
+                output.WriteLine("Генетический поиск");
+
+                int index = 1;
+
+                foreach (string row in File.ReadLines(cmdFile))
                 {
-                    proteins.Add(new ProteinData
+                    if (string.IsNullOrWhiteSpace(row)) continue;
+
+                    string[] segments = row.Split('\t');
+                    string action = segments[0].Trim().ToLower();
+                    string label = index.ToString("D3");
+
+                    output.WriteLine("-----------------------------------------------------------------");
+
+                    switch (action)
                     {
-                        Name = parts[0].Trim(),
-                        Organism = parts[1].Trim(),
-                        Sequence = DecodeRLE(parts[2].Trim()) 
-                    });
-                }
-            }
+                        case "search":
+                            string target = UnpackSequence(segments[1].Trim());
+                            output.WriteLine($"{label}  search  {target}");
 
-            using (StreamWriter writer = new StreamWriter(outputPath))
-            {
-                writer.WriteLine("Иван Иванов"); 
-                writer.WriteLine("Генетический поиск");
-
-                int commandCounter = 1;
-
-                foreach (var line in File.ReadLines(commandsPath))
-                {
-                    if (string.IsNullOrWhiteSpace(line)) continue;
-
-                    var parts = line.Split('\t');
-                    string commandType = parts[0].Trim().ToLower();
-                    string cmdNumberStr = commandCounter.ToString("D3");
-
-                    writer.WriteLine("-----------------------------------------------------------------");
-
-                    if (commandType == "search")
-                    {
-                        string searchTarget = DecodeRLE(parts[1].Trim());
-                        writer.WriteLine($"{cmdNumberStr}  search  {searchTarget}");
-
-                        var matches = proteins.Where(p => p.Sequence.Contains(searchTarget)).ToList();
-
-                        if (matches.Count > 0)
-                        {
-                            foreach (var match in matches)
+                            var found = registry.Where(item => item.Chain.Contains(target)).ToList();
+                            if (found.Count > 0)
                             {
-                                writer.WriteLine($"{match.Organism}     {match.Name}");
+                                foreach (var element in found)
+                                {
+                                    output.WriteLine($"{element.Source}     {element.Title}");
+                                }
                             }
-                        }
-                        else
-                        {
-                            writer.WriteLine("NOT FOUND");
-                        }
-                    }
-                    else if (commandType == "diff")
-                    {
-                        string protein1Name = parts[1].Trim();
-                        string protein2Name = parts[2].Trim();
-                        writer.WriteLine($"{cmdNumberStr}  diff  {protein1Name}  and  {protein2Name}");
-                        writer.Write("amino-acids difference: ");
+                            else
+                            {
+                                output.WriteLine("NOT FOUND");
+                            }
+                            break;
 
-                        var p1 = proteins.FirstOrDefault(p => p.Name.Equals(protein1Name, StringComparison.OrdinalIgnoreCase));
-                        var p2 = proteins.FirstOrDefault(p => p.Name.Equals(protein2Name, StringComparison.OrdinalIgnoreCase));
+                        case "diff":
+                            string firstKey = segments[1].Trim();
+                            string secondKey = segments[2].Trim();
+                            output.WriteLine($"{label}  diff  {firstKey}  and  {secondKey}");
+                            output.Write("amino-acids difference: ");
 
+                            var unit1 = registry.FirstOrDefault(x => x.Title.Equals(firstKey, StringComparison.OrdinalIgnoreCase));
+                            var unit2 = registry.FirstOrDefault(x => x.Title.Equals(secondKey, StringComparison.OrdinalIgnoreCase));
 
-                        if (p1 == null || p2 == null)
-                        {
-                            List<string> missing = new List<string>();
-                            if (p1 == null) missing.Add(protein1Name);
-                            if (p2 == null) missing.Add(protein2Name);
-                            writer.WriteLine($"MISSING: {string.Join(", ", missing)}");
-                        }
-                        else
-                        {
-                            int diffCount = CalculateDiff(p1.Sequence, p2.Sequence);
-                            writer.WriteLine(diffCount);
-                        }
-                    }
-                    else if (commandType == "mode")
-                    {
-                        string proteinName = parts[1].Trim();
-                        writer.WriteLine($"{cmdNumberStr}  mode  {proteinName}");
-                        writer.Write("amino-acid occurs: ");
+                            if (unit1.Title == null || unit2.Title == null)
+                            {
+                                List<string> lost = new List<string>();
+                                if (unit1.Title == null) lost.Add(firstKey);
+                                if (unit2.Title == null) lost.Add(secondKey);
+                                output.WriteLine($"MISSING: {string.Join(", ", lost)}");
+                            }
+                            else
+                            {
+                                output.WriteLine(GetDistance(unit1.Chain, unit2.Chain));
+                            }
+                            break;
 
-                        var p = proteins.FirstOrDefault(x => x.Name.Equals(proteinName, StringComparison.OrdinalIgnoreCase));
+                        case "mode":
+                            string targetKey = segments[1].Trim();
+                            output.WriteLine($"{label}  mode  {targetKey}");
+                            output.Write("amino-acid occurs: ");
 
-                        if (p == null)
-                        {
-                            writer.WriteLine($"MISSING: {proteinName}");
-                        }
-                        else
-                        {
-                            var (aminoAcid, count) = FindMode(p.Sequence);
-                            writer.WriteLine($"{aminoAcid} {count}");
-                        }
+                            var match = registry.FirstOrDefault(x => x.Title.Equals(targetKey, StringComparison.OrdinalIgnoreCase));
+                            if (match.Title == null)
+                            {
+                                output.WriteLine($"MISSING: {targetKey}");
+                            }
+                            else
+                            {
+                                var frequencyData = GetDominantChar(match.Chain);
+                                output.WriteLine($"{frequencyData.Key} {frequencyData.Value}");
+                            }
+                            break;
                     }
 
-                    commandCounter++;
+                    index++;
                 }
             }
 
             Console.WriteLine("Обработка завершена. Результаты сохранены в genedata.txt");
         }
 
-        static string DecodeRLE(string input)
+        static List<BioItem> LoadRegistry(string path)
         {
-            var result = new System.Text.StringBuilder();
-            for (int i = 0; i < input.Length; i++)
+            var items = new List<BioItem>();
+            foreach (string row in File.ReadLines(path))
             {
-                if (char.IsDigit(input[i]))
+                if (string.IsNullOrWhiteSpace(row)) continue;
+
+                string[] tokens = row.Split('\t');
+                if (tokens.Length >= 3)
                 {
-                    int count = input[i] - '0'; 
-                    char letter = input[i + 1];
-                    result.Append(letter, count);
-                    i++; 
+                    items.Add(new BioItem
+                    {
+                        Title = tokens[0].Trim(),
+                        Source = tokens[1].Trim(),
+                        Chain = UnpackSequence(tokens[2].Trim())
+                    });
+                }
+            }
+            return items;
+        }
+
+        static string UnpackSequence(string template)
+        {
+            StringBuilder sb = new StringBuilder();
+            int pointer = 0;
+
+            while (pointer < template.Length)
+            {
+                if (char.IsDigit(template[pointer]))
+                {
+                    int factor = template[pointer] - '0';
+                    sb.Append(template[pointer + 1], factor);
+                    pointer += 2;
                 }
                 else
                 {
-                    result.Append(input[i]);
+                    sb.Append(template[pointer]);
+                    pointer++;
                 }
             }
-            return result.ToString();
+            return sb.ToString();
         }
 
-        static int CalculateDiff(string seq1, string seq2)
+        static int GetDistance(string a, string b)
         {
-            int diff = 0;
-            int minLength = Math.Min(seq1.Length, seq2.Length);
-            int maxLength = Math.Max(seq1.Length, seq2.Length);
+            int totalDiff = 0;
+            int limit = Math.Max(a.Length, b.Length);
 
-            for (int i = 0; i < minLength; i++)
+            for (int i = 0; i < limit; i++)
             {
-                if (seq1[i] != seq2[i]) diff++;
+                if (i >= a.Length || i >= b.Length)
+                {
+                    totalDiff++;
+                }
+                else if (a[i] != b[i])
+                {
+                    totalDiff++;
+                }
             }
-
-            diff += (maxLength - minLength);
-            return diff;
+            return totalDiff;
         }
 
-        static (char, int) FindMode(string sequence)
+        static KeyValuePair<char, int> GetDominantChar(string sequence)
         {
-            var counts = new Dictionary<char, int>();
-            foreach (char c in sequence)
-            {
-                if (counts.ContainsKey(c)) counts[c]++;
-                else counts[c] = 1;
-            }
-
-            var best = counts.OrderByDescending(kvp => kvp.Value)
-                             .ThenBy(kvp => kvp.Key)
-                             .First();
-
-            return (best.Key, best.Value);
+            return sequence.GroupBy(c => c)
+                           .Select(g => new KeyValuePair<char, int>(g.Key, g.Count()))
+                           .OrderByDescending(kvp => kvp.Value)
+                           .ThenBy(kvp => kvp.Key)
+                           .First();
         }
     }
 }
