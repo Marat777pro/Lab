@@ -125,6 +125,55 @@ namespace GeneSearchApp
 
             Console.WriteLine("Обработка завершена. Результаты сохранены в genedata.txt");
         }
-        
+        static string DecodeRLE(string input)
+        {
+            var result = new System.Text.StringBuilder();
+            for (int i = 0; i < input.Length; i++)
+            {
+                if (char.IsDigit(input[i]))
+                {
+                    int count = input[i] - '0'; 
+                    char letter = input[i + 1];
+                    result.Append(letter, count);
+                    i++; 
+                }
+                else
+                {
+                    result.Append(input[i]);
+                }
+            }
+            return result.ToString();
+        }
+
+        static int CalculateDiff(string seq1, string seq2)
+        {
+            int diff = 0;
+            int minLength = Math.Min(seq1.Length, seq2.Length);
+            int maxLength = Math.Max(seq1.Length, seq2.Length);
+
+            for (int i = 0; i < minLength; i++)
+            {
+                if (seq1[i] != seq2[i]) diff++;
+            }
+
+            diff += (maxLength - minLength);
+            return diff;
+        }
+
+        static (char, int) FindMode(string sequence)
+        {
+            var counts = new Dictionary<char, int>();
+            foreach (char c in sequence)
+            {
+                if (counts.ContainsKey(c)) counts[c]++;
+                else counts[c] = 1;
+            }
+
+            var best = counts.OrderByDescending(kvp => kvp.Value)
+                             .ThenBy(kvp => kvp.Key)
+                             .First();
+
+            return (best.Key, best.Value);
+        }
     }
 }
