@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -7,6 +7,7 @@ namespace GeneSearchApp
 {
     class Program
     {
+
         class ProteinData
         {
             public string Name { get; set; }
@@ -30,7 +31,7 @@ namespace GeneSearchApp
             foreach (var line in File.ReadLines(sequencesPath))
             {
                 if (string.IsNullOrWhiteSpace(line)) continue;
-
+                
                 var parts = line.Split('\t');
                 if (parts.Length >= 3)
                 {
@@ -38,13 +39,14 @@ namespace GeneSearchApp
                     {
                         Name = parts[0].Trim(),
                         Organism = parts[1].Trim(),
-                        Sequence = DecodeRLE(parts[2].Trim())
+                        Sequence = DecodeRLE(parts[2].Trim()) 
                     });
                 }
             }
+
             using (StreamWriter writer = new StreamWriter(outputPath))
             {
-                writer.WriteLine("Иван Иванов");
+                writer.WriteLine("Иван Иванов"); 
                 writer.WriteLine("Генетический поиск");
 
                 int commandCounter = 1;
@@ -87,6 +89,8 @@ namespace GeneSearchApp
 
                         var p1 = proteins.FirstOrDefault(p => p.Name.Equals(protein1Name, StringComparison.OrdinalIgnoreCase));
                         var p2 = proteins.FirstOrDefault(p => p.Name.Equals(protein2Name, StringComparison.OrdinalIgnoreCase));
+
+
                         if (p1 == null || p2 == null)
                         {
                             List<string> missing = new List<string>();
@@ -125,6 +129,7 @@ namespace GeneSearchApp
 
             Console.WriteLine("Обработка завершена. Результаты сохранены в genedata.txt");
         }
+
         static string DecodeRLE(string input)
         {
             var result = new System.Text.StringBuilder();
