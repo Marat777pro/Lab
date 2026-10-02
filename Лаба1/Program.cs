@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
 
 namespace GeneSearchApp
@@ -28,21 +27,15 @@ namespace GeneSearchApp
             }
 
             List<BioItem> registry = LoadRegistry(srcFile);
-            ProcessCommands(cmdFile, resFile, registry);
 
-            Console.WriteLine("Обработка завершена. Результаты сохранены в genedata.txt");
-        }
-
-        static void ProcessCommands(string cmdPath, string resPath, List<BioItem> registry)
-        {
-            using (StreamWriter output = new StreamWriter(resPath))
+            using (StreamWriter output = new StreamWriter(resFile))
             {
-                output.WriteLine("Сабуть Марат");
+                output.WriteLine("Иван Иванов");
                 output.WriteLine("Генетический поиск");
 
                 int index = 1;
 
-                foreach (string row in File.ReadLines(cmdPath))
+                foreach (string row in File.ReadLines(cmdFile))
                 {
                     if (string.IsNullOrWhiteSpace(row)) continue;
 
@@ -52,69 +45,105 @@ namespace GeneSearchApp
 
                     output.WriteLine("-----------------------------------------------------------------");
 
-                    switch (action)
+                    if (action == "search")
                     {
-                        case "search":
-                            string target = UnpackSequence(segments[1].Trim());
-                            output.WriteLine($"{label}  search  {target}");
+                        string target = UnpackSequence(segments[1].Trim());
+                        output.WriteLine($"{label}  search  {target}");
 
-                            var found = registry.Where(item => item.Chain.Contains(target)).ToList();
-                            if (found.Count > 0)
+                        List<BioItem> found = new List<BioItem>();
+                        foreach (var item in registry)
+                        {
+                            if (item.Chain.Contains(target))
                             {
-                                foreach (var element in found)
-                                {
-                                    output.WriteLine($"{element.Source}     {element.Title}");
-                                }
+                                found.Add(item);
                             }
-                            else
-                            {
-                                output.WriteLine("NOT FOUND");
-                            }
-                            break;
+                        }
 
-                        case "diff":
-                            string firstKey = segments[1].Trim();
-                            string secondKey = segments[2].Trim();
-                            output.WriteLine($"{label}  diff  {firstKey}  and  {secondKey}");
-                            output.Write("amino-acids difference: ");
-
-                            var unit1 = registry.FirstOrDefault(x => x.Title.Equals(firstKey, StringComparison.OrdinalIgnoreCase));
-                            var unit2 = registry.FirstOrDefault(x => x.Title.Equals(secondKey, StringComparison.OrdinalIgnoreCase));
-
-                            if (unit1.Title == null || unit2.Title == null)
+                        if (found.Count > 0)
+                        {
+                            foreach (var element in found)
                             {
-                                List<string> lost = new List<string>();
-                                if (unit1.Title == null) lost.Add(firstKey);
-                                if (unit2.Title == null) lost.Add(secondKey);
-                                output.WriteLine($"MISSING: {string.Join(", ", lost)}");
+                                output.WriteLine($"{element.Source}     {element.Title}");
                             }
-                            else
-                            {
-                                output.WriteLine(GetDistance(unit1.Chain, unit2.Chain));
-                            }
-                            break;
+                        }
+                        else
+                        {
+                            output.WriteLine("NOT FOUND");
+                        }
+                    }
+                    else if (action == "diff")
+                    {
+                        string firstKey = segments[1].Trim();
+                        string secondKey = segments[2].Trim();
+                        output.WriteLine($"{label}  diff  {firstKey}  and  {secondKey}");
+                        output.Write("amino-acids difference: ");
 
-                        case "mode":
-                            string targetKey = segments[1].Trim();
-                            output.WriteLine($"{label}  mode  {targetKey}");
-                            output.Write("amino-acid occurs: ");
+                        BioItem unit1 = default;
+                        BioItem unit2 = default;
+                        bool hasUnit1 = false;
+                        bool hasUnit2 = false;
 
-                            var match = registry.FirstOrDefault(x => x.Title.Equals(targetKey, StringComparison.OrdinalIgnoreCase));
-                            if (match.Title == null)
+                        foreach (var x in registry)
+                        {
+                            if (x.Title.Equals(firstKey, StringComparison.OrdinalIgnoreCase))
                             {
-                                output.WriteLine($"MISSING: {targetKey}");
+                                unit1 = x;
+                                hasUnit1 = true;
                             }
-                            else
+                            if (x.Title.Equals(secondKey, StringComparison.OrdinalIgnoreCase))
                             {
-                                var frequencyData = GetDominantChar(match.Chain);
-                                output.WriteLine($"{frequencyData.Key} {frequencyData.Value}");
+                                unit2 = x;
+                                hasUnit2 = true;
                             }
-                            break;
+                        }
+
+                        if (!hasUnit1 || !hasUnit2)
+                        {
+                            List<string> lost = new List<string>();
+                            if (!hasUnit1) lost.Add(firstKey);
+                            if (!hasUnit2) lost.Add(secondKey);
+                            output.WriteLine($"MISSING: {string.Join(", ", lost)}");
+                        }
+                        else
+                        {
+                            output.WriteLine(GetDistance(unit1.Chain, unit2.Chain));
+                        }
+                    }
+                    else if (action == "mode")
+                    {
+                        string targetKey = segments[1].Trim();
+                        output.WriteLine($"{label}  mode  {targetKey}");
+                        output.Write("amino-acid occurs: ");
+
+                        BioItem match = default;
+                        bool hasMatch = false;
+
+                        foreach (var x in registry)
+                        {
+                            if (x.Title.Equals(targetKey, StringComparison.OrdinalIgnoreCase))
+                            {
+                                match = x;
+                                hasMatch = true;
+                                break;
+                            }
+                        }
+
+                        if (!hasMatch)
+                        {
+                            output.WriteLine($"MISSING: {targetKey}");
+                        }
+                        else
+                        {
+                            KeyValuePair<char, int> frequencyData = GetDominantChar(match.Chain);
+                            output.WriteLine($"{frequencyData.Key} {frequencyData.Value}");
+                        }
                     }
 
                     index++;
                 }
             }
+
+            Console.WriteLine("Обработка завершена. Результаты сохранены в genedata.txt");
         }
 
         static List<BioItem> LoadRegistry(string path)
@@ -181,11 +210,43 @@ namespace GeneSearchApp
 
         static KeyValuePair<char, int> GetDominantChar(string sequence)
         {
-            return sequence.GroupBy(c => c)
-                           .Select(g => new KeyValuePair<char, int>(g.Key, g.Count()))
-                           .OrderByDescending(kvp => kvp.Value)
-                           .ThenBy(kvp => kvp.Key)
-                           .First();
+            var counts = new Dictionary<char, int>();
+            foreach (char c in sequence)
+            {
+                if (counts.ContainsKey(c))
+                {
+                    counts[c]++;
+                }
+                else
+                {
+                    counts[c] = 1;
+                }
+            }
+
+            KeyValuePair<char, int> best = new KeyValuePair<char, int>('\0', -1);
+
+            foreach (var kvp in counts)
+            {
+                if (best.Value == -1)
+                {
+                    best = kvp;
+                    continue;
+                }
+
+                if (kvp.Value > best.Value)
+                {
+                    best = kvp;
+                }
+                else if (kvp.Value == best.Value)
+                {
+                    if (kvp.Key < best.Key)
+                    {
+                        best = kvp;
+                    }
+                }
+            }
+
+            return best;
         }
     }
 }
