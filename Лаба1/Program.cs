@@ -28,15 +28,21 @@ namespace GeneSearchApp
             }
 
             List<BioItem> registry = LoadRegistry(srcFile);
+            ProcessCommands(cmdFile, resFile, registry);
 
-            using (StreamWriter output = new StreamWriter(resFile))
+            Console.WriteLine("Обработка завершена. Результаты сохранены в genedata.txt");
+        }
+
+        static void ProcessCommands(string cmdPath, string resPath, List<BioItem> registry)
+        {
+            using (StreamWriter output = new StreamWriter(resPath))
             {
                 output.WriteLine("Иван Иванов");
                 output.WriteLine("Генетический поиск");
 
                 int index = 1;
 
-                foreach (string row in File.ReadLines(cmdFile))
+                foreach (string row in File.ReadLines(cmdPath))
                 {
                     if (string.IsNullOrWhiteSpace(row)) continue;
 
@@ -109,8 +115,6 @@ namespace GeneSearchApp
                     index++;
                 }
             }
-
-            Console.WriteLine("Обработка завершена. Результаты сохранены в genedata.txt");
         }
 
         static List<BioItem> LoadRegistry(string path)
