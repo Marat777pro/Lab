@@ -37,7 +37,7 @@ namespace GeneSearchApp
         {
             using (StreamWriter output = new StreamWriter(resPath))
             {
-                output.WriteLine("Иван Иванов");
+                output.WriteLine("Сабуть Марат");
                 output.WriteLine("Генетический поиск");
 
                 int index = 1;
