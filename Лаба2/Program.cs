@@ -140,3 +140,78 @@ namespace CatAndMouseGame
 
             SaveOutputLog();
         }
+        private void DoMoveCommand(char command, int steps)
+        {
+            switch (command)
+            {
+                case 'M': mouse.Move(steps, size); break;
+                case 'C': cat.Move(steps, size); break;
+            }
+        }
+
+        private void DoPrintCommand()
+        {
+            string catStr = (cat.state != State.NotInGame) ? cat.location.ToString() : "??";
+            string mouseStr = (mouse.state != State.NotInGame) ? mouse.location.ToString() : "??";
+
+            string distStr = (cat.state != State.NotInGame && mouse.state != State.NotInGame)
+                ? GetDistance().ToString()
+                : "";
+
+            pOutputs.Add($"{catStr,4}{mouseStr,6}{distStr,10}");
+        }
+
+        private int GetDistance()
+        {
+            if (cat.state == State.NotInGame || mouse.state == State.NotInGame)
+                return 0;
+
+            int diff = Math.Abs(cat.location - mouse.location);
+            return Math.Min(diff, size - diff);
+        }
+
+        private void SaveOutputLog()
+        {
+            using (StreamWriter writer = new StreamWriter(OutFile))
+            {
+                writer.WriteLine("Cat and Mouse");
+                writer.WriteLine();
+                writer.WriteLine("Cat Mouse  Distance");
+                writer.WriteLine("-------------------");
+                foreach (var logLine in pOutputs)
+                {
+                    writer.WriteLine(logLine);
+                }
+                writer.WriteLine("-------------------");
+                writer.WriteLine();
+                writer.WriteLine();
+                writer.WriteLine("Distance traveled:   Mouse    Cat");
+                writer.WriteLine($"                        {mouse.distanceTraveled,-8}{cat.distanceTraveled}");
+                writer.WriteLine();
+
+                if (mouse.state == State.Looser)
+                {
+                    writer.WriteLine($"Mouse caught at: {cat.location}");
+                }
+                else
+                {
+                    writer.WriteLine("Mouse evaded Cat");
+                }
+            }
+        }
+    }
+
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            Game.InputFile = "1.ChaseData.txt";
+            Game.OutFile = "1.PursuitLog.txt";
+
+            Game game = new Game(16);
+            game.Run();
+
+            Console.WriteLine($"Расчет файла {Game.InputFile} успешно завершен!");
+        }
+    }
+}
