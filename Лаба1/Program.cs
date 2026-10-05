@@ -28,14 +28,19 @@ namespace GeneSearchApp
 
             List<BioItem> registry = LoadRegistry(srcFile);
 
-            using (StreamWriter output = new StreamWriter(resFile))
+            ExecuteCommands(cmdFile, resFile, registry);
+        }
+
+        static void ExecuteCommands(string cmdPath, string resPath, List<BioItem> registry)
+        {
+            using (StreamWriter output = new StreamWriter(resPath))
             {
-                output.WriteLine("Иван Иванов");
+                output.WriteLine("Сабуть Марат Андреевич");
                 output.WriteLine("Генетический поиск");
 
                 int index = 1;
 
-                foreach (string row in File.ReadLines(cmdFile))
+                foreach (string row in File.ReadLines(cmdPath))
                 {
                     if (string.IsNullOrWhiteSpace(row)) continue;
 
