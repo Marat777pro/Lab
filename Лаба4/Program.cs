@@ -107,6 +107,59 @@ public class Text : IEnumerable<Sentence>
     {
         return string.Join(" ", Sentences);
     }
+
+    // === ВСЕГО ОДИН МЕТОД, КОТОРЫЙ ВЫ СЮДА ВСТАВЛЯЕТЕ ===
+    public string BuildConcordance(string originalRawText)
+    {
+        if (Sentences == null || Sentences.Count == 0)
+            return "Текст пуст.";
+
+        string[] sourceLines = originalRawText.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+        var concordance = new SortedDictionary<string, (int TotalCount, SortedSet<int> LineNumbers)>();
+
+        foreach (var sentence in Sentences)
+        {
+            foreach (var token in sentence.Tokens)
+            {
+                if (token is Word wordToken)
+                {
+                    string wordValue = wordToken.Value;
+                    string wordLower = wordValue.ToLower();
+
+                    if (!concordance.ContainsKey(wordLower))
+                    {
+                        concordance[wordLower] = (0, new SortedSet<int>());
+                    }
+
+                    var data = concordance[wordLower];
+                    data.TotalCount++;
+
+                    for (int i = 0; i < sourceLines.Length; i++)
+                    {
+                        if (Regex.IsMatch(sourceLines[i], @"\b" + Regex.Escape(wordValue) + @"\b", RegexOptions.IgnoreCase))
+                        {
+                            data.LineNumbers.Add(i + 1);
+                        }
+                    }
+
+                    concordance[wordLower] = data;
+                }
+            }
+        }
+
+        var sb = new StringBuilder();
+        foreach (var pair in concordance)
+        {
+            string word = pair.Key;
+            int count = pair.Value.TotalCount;
+            string lines = string.Join(" ", pair.Value.LineNumbers);
+
+            string leftPart = $"{word}".PadRight(35, '.');
+            sb.AppendLine($"{leftPart}{count}: {lines}");
+        }
+
+        return sb.ToString();
+    }
 }
 
 public static class TextParser
@@ -240,3 +293,4 @@ public static class TextService
         }
     }
 }
+
