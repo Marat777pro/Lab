@@ -108,3 +108,43 @@ public class Text : IEnumerable<Sentence>
         return string.Join(" ", Sentences);
     }
 }
+
+public static class TextParser
+{
+    public static Text Parse(string rawText)
+    {
+        var textObj = new Text();
+        if (string.IsNullOrWhiteSpace(rawText)) return textObj;
+
+        string sentenceRegex = @"(?<=[.!?])\s+";
+        var rawSentences = Regex.Split(rawText, sentenceRegex);
+
+        foreach (var rawSentence in rawSentences)
+        {
+            if (string.IsNullOrWhiteSpace(rawSentence)) continue;
+
+            var sentenceObj = new Sentence();
+            string tokenRegex = @"([\w-]+)|([^\w\s])";
+            var matches = Regex.Matches(rawSentence, tokenRegex);
+
+            foreach (Match match in matches)
+            {
+                if (match.Groups[1].Success)
+                {
+                    sentenceObj.Tokens.Add(new Word(match.Groups[1].Value));
+                }
+                else if (match.Groups[2].Success)
+                {
+                    sentenceObj.Tokens.Add(new Punctuation(match.Groups[2].Value));
+                }
+            }
+
+            if (sentenceObj.Tokens.Count > 0)
+            {
+                textObj.Sentences.Add(sentenceObj);
+            }
+        }
+
+        return textObj;
+    }
+}
