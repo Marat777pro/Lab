@@ -148,3 +148,95 @@ public static class TextParser
         return textObj;
     }
 }
+
+public static class TextService
+{
+    public static List<Sentence> SortByWordCount(Text text)
+    {
+        List<Sentence> sorted = new List<Sentence>(text.Sentences);
+        sorted.Sort((s1, s2) => s1.WordCount.CompareTo(s2.WordCount));
+        return sorted;
+    }
+
+    public static List<Sentence> SortByLength(Text text)
+    {
+        List<Sentence> sorted = new List<Sentence>(text.Sentences);
+        sorted.Sort((s1, s2) => s1.Length.CompareTo(s2.Length));
+        return sorted;
+    }
+
+    public static HashSet<string> FindWordsInQuestions(Text text, int length)
+    {
+        var result = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var sentence in text.Sentences)
+        {
+            if (sentence.IsQuestion)
+            {
+                foreach (var token in sentence.Tokens)
+                {
+                    if (token is Word word && word.Length == length)
+                    {
+                        result.Add(word.Value);
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    public static void RemoveWordsStartingWithConsonant(Text text, int length)
+    {
+        string consonants = "bcdfghjklmnpqrstvwxyzбвгджзйклмнпрстфхцчшщ";
+
+        foreach (var sentence in text.Sentences)
+        {
+            for (int i = sentence.Tokens.Count - 1; i >= 0; i--)
+            {
+                if (sentence.Tokens[i] is Word w && w.Length == length)
+                {
+                    if (w.Value.Length > 0 && consonants.Contains(char.ToLower(w.Value[0]).ToString()))
+                    {
+                        sentence.Tokens.RemoveAt(i);
+                    }
+                }
+            }
+        }
+    }
+
+    public static void ReplaceWordsInSentence(Sentence sentence, int length, string subString)
+    {
+        for (int i = 0; i < sentence.Tokens.Count; i++)
+        {
+            if (sentence.Tokens[i] is Word w && w.Length == length)
+            {
+                sentence.Tokens[i] = new Word(subString);
+            }
+        }
+    }
+
+    public static void RemoveStopWords(Text text, HashSet<string> stopWords)
+    {
+        foreach (var sentence in text.Sentences)
+        {
+            for (int i = sentence.Tokens.Count - 1; i >= 0; i--)
+            {
+                if (sentence.Tokens[i] is Word w)
+                {
+                    if (stopWords.Contains(w.Value.ToLower()))
+                    {
+                        sentence.Tokens.RemoveAt(i);
+                    }
+                }
+            }
+        }
+    }
+
+    public static void ExportToXml(Text text, string filePath)
+    {
+        XmlSerializer serializer = new XmlSerializer(typeof(Text));
+        using (StreamWriter writer = new StreamWriter(filePath, false, Encoding.UTF8))
+        {
+            serializer.Serialize(writer, text);
+        }
+    }
+}
