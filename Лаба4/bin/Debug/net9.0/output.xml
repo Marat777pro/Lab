@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<text xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <ArrayOfToken>
+    <Token xsi:type="Word">Токенизация</Token>
+    <Token xsi:type="Punctuation">—</Token>
+    <Token xsi:type="Word">это</Token>
+    <Token xsi:type="Word">процесс</Token>
+    <Token xsi:type="Word">разбиения</Token>
+    <Token xsi:type="Word">заданного</Token>
+    <Token xsi:type="Word">текста</Token>
+    <Token xsi:type="Word">на</Token>
+    <Token xsi:type="Word">элементарные</Token>
+    <Token xsi:type="Word">блоки</Token>
+    <Token xsi:type="Punctuation">,</Token>
+    <Token xsi:type="Word">называемые</Token>
+    <Token xsi:type="Word">токенами</Token>
+    <Token xsi:type="Punctuation">.</Token>
+  </ArrayOfToken>
+  <ArrayOfToken>
+    <Token xsi:type="Word">Токены</Token>
+    <Token xsi:type="Punctuation">—</Token>
+    <Token xsi:type="Word">это</Token>
+    <Token xsi:type="Word">отдельные</Token>
+    <Token xsi:type="Word">слова</Token>
+    <Token xsi:type="Punctuation">,</Token>
+    <Token xsi:type="Word">знаки</Token>
+    <Token xsi:type="Word">препинания</Token>
+    <Token xsi:type="Punctuation">,</Token>
+    <Token xsi:type="Word">предложения</Token>
+    <Token xsi:type="Punctuation">.</Token>
+  </ArrayOfToken>
+  <ArrayOfToken>
+    <Token xsi:type="Word">Текст</Token>
+    <Token xsi:type="Word">состоит</Token>
+    <Token xsi:type="Word">из</Token>
+    <Token xsi:type="Word">предложений</Token>
+    <Token xsi:type="Punctuation">.</Token>
+  </ArrayOfToken>
+  <ArrayOfToken>
+    <Token xsi:type="Word">Предложение</Token>
+    <Token xsi:type="Word">состоит</Token>
+    <Token xsi:type="Word">из</Token>
+    <Token xsi:type="Word">слов</Token>
+    <Token xsi:type="Punctuation">,</Token>
+    <Token xsi:type="Word">разделенных</Token>
+    <Token xsi:type="Word">пробелами</Token>
+    <Token xsi:type="Word">или</Token>
+    <Token xsi:type="Word">знаками</Token>
+    <Token xsi:type="Word">препинания</Token>
+    <Token xsi:type="Punctuation">.</Token>
+  </ArrayOfToken>
+</text>
