@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Xml;
 using System.Xml.Serialization;
 
 [XmlInclude(typeof(Word))]
@@ -37,11 +36,12 @@ public class Punctuation : Token
 
 public class Sentence : IEnumerable<Token>
 {
-    [XmlElement("word", typeof(Word))]
-    [XmlElement("punctuation", typeof(Punctuation))]
+    [XmlElement("Word", typeof(Word))]
+    [XmlElement("Punctuation", typeof(Punctuation))]
     public List<Token> Tokens { get; set; } = new List<Token>();
 
     public void Add(Token token) => Tokens.Add(token);
+
 
     [XmlIgnore]
     public int WordCount
@@ -119,7 +119,7 @@ public class Text : IEnumerable<Sentence>
             return "Текст пуст.";
 
         string[] sourceLines = originalRawText.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
-        var concordance = new SortedDictionary<string, (int TotalCount, SortedSet<int> LineNumbers)>();
+        var concordance = new Dictionary<string, (int TotalCount, SortedSet<int> LineNumbers)>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var sentence in Sentences)
         {
@@ -127,46 +127,47 @@ public class Text : IEnumerable<Sentence>
             {
                 if (token is Word wordToken)
                 {
-                    string wordValue = wordToken.Value;
-                    string wordLower = wordValue.ToLower();
+                    string wordLower = wordToken.Value.ToLower();
 
-                    if (!concordance.ContainsKey(wordLower))
+                    if (!concordance.TryGetValue(wordLower, out var data))
                     {
-                        concordance[wordLower] = (0, new SortedSet<int>());
-                    }
+                        var linesSet = new SortedSet<int>();
+                        string pattern = @"(?<![\w-])" + Regex.Escape(wordLower) + @"(?![\w-])";
 
-                    var data = concordance[wordLower];
-                    data.TotalCount++;
-
-                    for (int i = 0; i < sourceLines.Length; i++)
-                    {
-                        if (Regex.IsMatch(sourceLines[i], @"\b" + Regex.Escape(wordValue) + @"\b", RegexOptions.IgnoreCase))
+                        for (int i = 0; i < sourceLines.Length; i++)
                         {
-                            data.LineNumbers.Add(i + 1);
+                            if (Regex.IsMatch(sourceLines[i], pattern, RegexOptions.IgnoreCase))
+                            {
+                                linesSet.Add(i + 1);
+                            }
                         }
+
+                        data = (0, linesSet);
                     }
 
+                    data.TotalCount++;
                     concordance[wordLower] = data;
                 }
             }
         }
 
-        var sb = new StringBuilder();
-        foreach (var pair in concordance)
-        {
-            string word = pair.Key;
-            int count = pair.Value.TotalCount;
-            string lines = string.Join(" ", pair.Value.LineNumbers);
+        var sortedWords = new List<string>(concordance.Keys);
+        sortedWords.Sort(StringComparer.OrdinalIgnoreCase);
 
-            string leftPart = $"{word}".PadRight(35, '.');
-            sb.AppendLine($"{leftPart}{count}: {lines}");
+        var sb = new StringBuilder();
+        foreach (string word in sortedWords)
+        {
+            var entry = concordance[word];
+            string lines = string.Join(" ", entry.LineNumbers);
+            string leftPart = word.PadRight(35, '.');
+            sb.AppendLine($"{leftPart}{entry.TotalCount}: {lines}");
         }
 
         return sb.ToString();
     }
 }
 
-public static class TextParser
+    public static class TextParser
 {
     public static Text Parse(string rawText)
     {
@@ -290,46 +291,14 @@ public static class TextService
 
     public static void ExportToXml(Text text, string filePath)
     {
-        var xmlText = new Text();
-        foreach (var sentence in text.Sentences)
-        {
-            var newSentence = new Sentence();
-            var words = new List<Word>();
-            foreach (var token in sentence.Tokens)
-            {
-                if (token is Word w)
-                {
-                    words.Add(new Word(w.Value));
-                }
-            }
-            words.Sort((a, b) => string.Compare(a.Value, b.Value, StringComparison.OrdinalIgnoreCase));
-            foreach (var w in words)
-            {
-                newSentence.Tokens.Add(w);
-            }
-            xmlText.Sentences.Add(newSentence);
-        }
-
         XmlSerializer serializer = new XmlSerializer(typeof(Text));
-        XmlSerializerNamespaces ns = new XmlSerializerNamespaces();
-        ns.Add("", "");
-
-        XmlWriterSettings settings = new XmlWriterSettings
+        using (StreamWriter writer = new StreamWriter(filePath, false, Encoding.UTF8))
         {
-            Encoding = new UTF8Encoding(false),
-            Indent = true,
-            IndentChars = ""
-        };
-
-        using (XmlWriter writer = XmlWriter.Create(filePath, settings))
-        {
-            writer.WriteStartDocument(true);
-            serializer.Serialize(writer, xmlText, ns);
-            writer.WriteEndDocument();
+            serializer.Serialize(writer, text);
         }
     }
-
 }
+
 
 class Program
 {
@@ -382,7 +351,7 @@ class Program
         }
 
         Text textForStopWords = TextParser.Parse(rawText);
-        HashSet<string> stopWords = LoadStopWords("stopwords_ru.txt", "stopwords_en.txt");
+        var stopWords = LoadStopWords("stopwords_ru.txt", "stopwords_en.txt");
         TextService.RemoveStopWords(textForStopWords, stopWords);
         Console.WriteLine("\n=== 6. Текст после удаления стоп-слов ===");
         Console.WriteLine(textForStopWords);
@@ -390,6 +359,11 @@ class Program
         string xmlPath = "output.xml";
         TextService.ExportToXml(text, xmlPath);
         Console.WriteLine($"\n=== 7. Текст успешно сохранен в файл {xmlPath} ===");
+
+        Console.WriteLine("\n=== 8. Конкорданс ===");
+        string concordanceResult = text.BuildConcordance(rawText);
+        Console.WriteLine(concordanceResult);
+        File.WriteAllText("concordance.txt", concordanceResult, Encoding.UTF8);
 
         Console.ReadKey();
     }
@@ -402,7 +376,7 @@ class Program
             if (File.Exists(path))
             {
                 foreach (var line in File.ReadAllLines(path, Encoding.UTF8))
-                {
+                {   
                     string trimmed = line.Trim();
                     if (!string.IsNullOrEmpty(trimmed))
                     {
@@ -414,4 +388,3 @@ class Program
         return stopWords;
     }
 }
-

@@ -1,42 +1,52 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<text>
-<ArrayOfToken>
-<Token p3:type="Word" xmlns:p3="http://www.w3.org/2001/XMLSchema-instance">блоки</Token>
-<Token p3:type="Word" xmlns:p3="http://www.w3.org/2001/XMLSchema-instance">заданного</Token>
-<Token p3:type="Word" xmlns:p3="http://www.w3.org/2001/XMLSchema-instance">на</Token>
-<Token p3:type="Word" xmlns:p3="http://www.w3.org/2001/XMLSchema-instance">называемые</Token>
-<Token p3:type="Word" xmlns:p3="http://www.w3.org/2001/XMLSchema-instance">процесс</Token>
-<Token p3:type="Word" xmlns:p3="http://www.w3.org/2001/XMLSchema-instance">разбиения</Token>
-<Token p3:type="Word" xmlns:p3="http://www.w3.org/2001/XMLSchema-instance">текста</Token>
-<Token p3:type="Word" xmlns:p3="http://www.w3.org/2001/XMLSchema-instance">токенами</Token>
-<Token p3:type="Word" xmlns:p3="http://www.w3.org/2001/XMLSchema-instance">Токенизация</Token>
-<Token p3:type="Word" xmlns:p3="http://www.w3.org/2001/XMLSchema-instance">элементарные</Token>
-<Token p3:type="Word" xmlns:p3="http://www.w3.org/2001/XMLSchema-instance">это</Token>
-</ArrayOfToken>
-<ArrayOfToken>
-<Token p3:type="Word" xmlns:p3="http://www.w3.org/2001/XMLSchema-instance">знаки</Token>
-<Token p3:type="Word" xmlns:p3="http://www.w3.org/2001/XMLSchema-instance">отдельные</Token>
-<Token p3:type="Word" xmlns:p3="http://www.w3.org/2001/XMLSchema-instance">предложения</Token>
-<Token p3:type="Word" xmlns:p3="http://www.w3.org/2001/XMLSchema-instance">препинания</Token>
-<Token p3:type="Word" xmlns:p3="http://www.w3.org/2001/XMLSchema-instance">слова</Token>
-<Token p3:type="Word" xmlns:p3="http://www.w3.org/2001/XMLSchema-instance">Токены</Token>
-<Token p3:type="Word" xmlns:p3="http://www.w3.org/2001/XMLSchema-instance">это</Token>
-</ArrayOfToken>
-<ArrayOfToken>
-<Token p3:type="Word" xmlns:p3="http://www.w3.org/2001/XMLSchema-instance">из</Token>
-<Token p3:type="Word" xmlns:p3="http://www.w3.org/2001/XMLSchema-instance">предложений</Token>
-<Token p3:type="Word" xmlns:p3="http://www.w3.org/2001/XMLSchema-instance">состоит</Token>
-<Token p3:type="Word" xmlns:p3="http://www.w3.org/2001/XMLSchema-instance">Текст</Token>
-</ArrayOfToken>
-<ArrayOfToken>
-<Token p3:type="Word" xmlns:p3="http://www.w3.org/2001/XMLSchema-instance">знаками</Token>
-<Token p3:type="Word" xmlns:p3="http://www.w3.org/2001/XMLSchema-instance">из</Token>
-<Token p3:type="Word" xmlns:p3="http://www.w3.org/2001/XMLSchema-instance">или</Token>
-<Token p3:type="Word" xmlns:p3="http://www.w3.org/2001/XMLSchema-instance">Предложение</Token>
-<Token p3:type="Word" xmlns:p3="http://www.w3.org/2001/XMLSchema-instance">препинания</Token>
-<Token p3:type="Word" xmlns:p3="http://www.w3.org/2001/XMLSchema-instance">пробелами</Token>
-<Token p3:type="Word" xmlns:p3="http://www.w3.org/2001/XMLSchema-instance">разделенных</Token>
-<Token p3:type="Word" xmlns:p3="http://www.w3.org/2001/XMLSchema-instance">слов</Token>
-<Token p3:type="Word" xmlns:p3="http://www.w3.org/2001/XMLSchema-instance">состоит</Token>
-</ArrayOfToken>
+﻿<?xml version="1.0" encoding="utf-8"?>
+<text xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <ArrayOfToken>
+    <Token xsi:type="Word">Токенизация</Token>
+    <Token xsi:type="Punctuation">—</Token>
+    <Token xsi:type="Word">это</Token>
+    <Token xsi:type="Word">процесс</Token>
+    <Token xsi:type="Word">разбиения</Token>
+    <Token xsi:type="Word">заданного</Token>
+    <Token xsi:type="Word">текста</Token>
+    <Token xsi:type="Word">на</Token>
+    <Token xsi:type="Word">элементарные</Token>
+    <Token xsi:type="Word">блоки</Token>
+    <Token xsi:type="Punctuation">,</Token>
+    <Token xsi:type="Word">называемые</Token>
+    <Token xsi:type="Word">токенами</Token>
+    <Token xsi:type="Punctuation">.</Token>
+  </ArrayOfToken>
+  <ArrayOfToken>
+    <Token xsi:type="Word">Токены</Token>
+    <Token xsi:type="Punctuation">—</Token>
+    <Token xsi:type="Word">это</Token>
+    <Token xsi:type="Word">отдельные</Token>
+    <Token xsi:type="Word">слова</Token>
+    <Token xsi:type="Punctuation">,</Token>
+    <Token xsi:type="Word">знаки</Token>
+    <Token xsi:type="Word">препинания</Token>
+    <Token xsi:type="Punctuation">,</Token>
+    <Token xsi:type="Word">предложения</Token>
+    <Token xsi:type="Punctuation">.</Token>
+  </ArrayOfToken>
+  <ArrayOfToken>
+    <Token xsi:type="Word">Текст</Token>
+    <Token xsi:type="Word">состоит</Token>
+    <Token xsi:type="Word">из</Token>
+    <Token xsi:type="Word">предложений</Token>
+    <Token xsi:type="Punctuation">.</Token>
+  </ArrayOfToken>
+  <ArrayOfToken>
+    <Token xsi:type="Word">Предложение</Token>
+    <Token xsi:type="Word">состоит</Token>
+    <Token xsi:type="Word">из</Token>
+    <Token xsi:type="Word">слов</Token>
+    <Token xsi:type="Punctuation">,</Token>
+    <Token xsi:type="Word">разделенных</Token>
+    <Token xsi:type="Word">пробелами</Token>
+    <Token xsi:type="Word">или</Token>
+    <Token xsi:type="Word">знаками</Token>
+    <Token xsi:type="Word">препинания</Token>
+    <Token xsi:type="Punctuation">.</Token>
+  </ArrayOfToken>
 </text>
