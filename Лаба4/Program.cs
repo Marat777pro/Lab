@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Xml;
 using System.Xml.Serialization;
 
 [XmlInclude(typeof(Word))]
@@ -36,9 +37,11 @@ public class Punctuation : Token
 
 public class Sentence : IEnumerable<Token>
 {
-    [XmlElement("Word", typeof(Word))]
-    [XmlElement("Punctuation", typeof(Punctuation))]
+    [XmlElement("word", typeof(Word))]
+    [XmlElement("punctuation", typeof(Punctuation))]
     public List<Token> Tokens { get; set; } = new List<Token>();
+
+    public void Add(Token token) => Tokens.Add(token);
 
     [XmlIgnore]
     public int WordCount
@@ -100,6 +103,8 @@ public class Text : IEnumerable<Sentence>
     [XmlElement("sentence")]
     public List<Sentence> Sentences { get; set; } = new List<Sentence>();
 
+    public void Add(Sentence sentence) => Sentences.Add(sentence);
+
     public IEnumerator<Sentence> GetEnumerator() => Sentences.GetEnumerator();
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
@@ -108,7 +113,6 @@ public class Text : IEnumerable<Sentence>
         return string.Join(" ", Sentences);
     }
 
-    // === ВСЕГО ОДИН МЕТОД, КОТОРЫЙ ВЫ СЮДА ВСТАВЛЯЕТЕ ===
     public string BuildConcordance(string originalRawText)
     {
         if (Sentences == null || Sentences.Count == 0)
@@ -286,11 +290,128 @@ public static class TextService
 
     public static void ExportToXml(Text text, string filePath)
     {
-        XmlSerializer serializer = new XmlSerializer(typeof(Text));
-        using (StreamWriter writer = new StreamWriter(filePath, false, Encoding.UTF8))
+        var xmlText = new Text();
+        foreach (var sentence in text.Sentences)
         {
-            serializer.Serialize(writer, text);
+            var newSentence = new Sentence();
+            var words = new List<Word>();
+            foreach (var token in sentence.Tokens)
+            {
+                if (token is Word w)
+                {
+                    words.Add(new Word(w.Value));
+                }
+            }
+            words.Sort((a, b) => string.Compare(a.Value, b.Value, StringComparison.OrdinalIgnoreCase));
+            foreach (var w in words)
+            {
+                newSentence.Tokens.Add(w);
+            }
+            xmlText.Sentences.Add(newSentence);
         }
+
+        XmlSerializer serializer = new XmlSerializer(typeof(Text));
+        XmlSerializerNamespaces ns = new XmlSerializerNamespaces();
+        ns.Add("", "");
+
+        XmlWriterSettings settings = new XmlWriterSettings
+        {
+            Encoding = new UTF8Encoding(false),
+            Indent = true,
+            IndentChars = ""
+        };
+
+        using (XmlWriter writer = XmlWriter.Create(filePath, settings))
+        {
+            writer.WriteStartDocument(true);
+            serializer.Serialize(writer, xmlText, ns);
+            writer.WriteEndDocument();
+        }
+    }
+
+}
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        Console.OutputEncoding = Encoding.UTF8;
+        string inputFile = "input.txt";
+
+        if (!File.Exists(inputFile))
+        {
+            Console.WriteLine($"Файл '{inputFile}' не найден. Создайте его в папке: {Directory.GetCurrentDirectory()}");
+            Console.ReadKey();
+            return;
+        }
+
+        string rawText = File.ReadAllText(inputFile, Encoding.UTF8);
+        Text text = TextParser.Parse(rawText);
+
+        Console.WriteLine("=== 1. По возрастанию количества слов ===");
+        foreach (var s in TextService.SortByWordCount(text))
+        {
+            Console.WriteLine($"[{s.WordCount} сл.] {s}");
+        }
+
+        Console.WriteLine("\n=== 2. По возрастанию длины предложения ===");
+        foreach (var s in TextService.SortByLength(text))
+        {
+            Console.WriteLine($"[{s.Length} симв.] {s}");
+        }
+
+        int questionWordLen = 4;
+        Console.WriteLine($"\n=== 3. Слова длиной {questionWordLen} в вопросах ===");
+        var qWords = TextService.FindWordsInQuestions(text, questionWordLen);
+        Console.WriteLine(qWords.Count > 0 ? string.Join(", ", qWords) : "Не найдено.");
+
+        int removeLen = 5;
+        Text textForConsonants = TextParser.Parse(rawText);
+        TextService.RemoveWordsStartingWithConsonant(textForConsonants, removeLen);
+        Console.WriteLine($"\n=== 4. После удаления слов длиной {removeLen} на согласную ===");
+        Console.WriteLine(textForConsonants);
+
+        Text textForReplace = TextParser.Parse(rawText);
+        if (textForReplace.Sentences.Count > 0)
+        {
+            int targetWordLen = 3;
+            string replacement = "[ЗАМЕНА]";
+            TextService.ReplaceWordsInSentence(textForReplace.Sentences[0], targetWordLen, replacement);
+            Console.WriteLine($"\n=== 5. Замена слов длиной {targetWordLen} в 1-м предложении ===");
+            Console.WriteLine(textForReplace.Sentences[0]);
+        }
+
+        Text textForStopWords = TextParser.Parse(rawText);
+        HashSet<string> stopWords = LoadStopWords("stopwords_ru.txt", "stopwords_en.txt");
+        TextService.RemoveStopWords(textForStopWords, stopWords);
+        Console.WriteLine("\n=== 6. Текст после удаления стоп-слов ===");
+        Console.WriteLine(textForStopWords);
+
+        string xmlPath = "output.xml";
+        TextService.ExportToXml(text, xmlPath);
+        Console.WriteLine($"\n=== 7. Текст успешно сохранен в файл {xmlPath} ===");
+
+        Console.ReadKey();
+    }
+
+    static HashSet<string> LoadStopWords(params string[] filePaths)
+    {
+        var stopWords = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var path in filePaths)
+        {
+            if (File.Exists(path))
+            {
+                foreach (var line in File.ReadAllLines(path, Encoding.UTF8))
+                {
+                    string trimmed = line.Trim();
+                    if (!string.IsNullOrEmpty(trimmed))
+                    {
+                        stopWords.Add(trimmed.ToLower());
+                    }
+                }
+            }
+        }
+        return stopWords;
     }
 }
 
